@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 #
 # This script goes trhough all the subdirs in `LANG` and runs
 # the given command
