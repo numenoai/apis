@@ -1,0 +1,11 @@
+apis/DefaultApi.ts
+apis/index.ts
+index.ts
+models/ErrorDetail.ts
+models/ErrorResponse.ts
+models/HealthCheck.ts
+models/Persona.ts
+models/PersonaUpdate.ts
+models/Personas.ts
+models/index.ts
+runtime.ts

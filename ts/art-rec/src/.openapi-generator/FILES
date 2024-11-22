@@ -1,0 +1,13 @@
+apis/DefaultApi.ts
+apis/index.ts
+index.ts
+models/Article.ts
+models/ErrorDetail.ts
+models/ErrorResponse.ts
+models/Feed.ts
+models/FeedNew.ts
+models/FeedUpdate.ts
+models/Feeds.ts
+models/HealthCheck.ts
+models/index.ts
+runtime.ts

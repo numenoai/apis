@@ -1,0 +1,27 @@
+{
+  "name": "@numeno/api-art-rec",
+  "version": "0.0.3",
+  "description": "Client library for Numeno Article Recommender API",
+  "license": "MIT",
+  "author": "Numeno AI inc. <contact@numeno.ai>",
+  "keywords": [
+    "numeno",
+    "api"
+  ],
+  "homepage": "https://numeno.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/waverlyai/numeno-apis",
+    "directory": "apis/art-rec/ts"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build tsconfig.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.8.0",
+    "typescript": "^5.6.3"
+  }
+}

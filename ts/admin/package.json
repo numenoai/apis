@@ -1,0 +1,27 @@
+{
+  "name": "@numeno/api-admin",
+  "version": "0.0.2",
+  "description": "Client library for Numeno Admin API",
+  "license": "MIT",
+  "author": "Numeno AI inc. <contact@numeno.ai>",
+  "keywords": [
+    "numeno",
+    "api"
+  ],
+  "homepage": "https://numeno.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/waverlyai/numeno-apis",
+    "directory": "apis/admin/ts"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build tsconfig.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.8.0",
+    "typescript": "^5.6.3"
+  }
+}
