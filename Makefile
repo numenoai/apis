@@ -25,5 +25,5 @@ publish:
     ## Check we're in a github action
 	@if [ -z "${GITHUB_ACTIONS}" ]; then echo "This command is only meant to be run in a Github Action"; exit 1; fi
 	@echo "Publishing all APIS..."
-	@./scripts/run-in-all.sh --ts npm publish
+	@./scripts/run-in-all.sh --ts npm publish --access public
 

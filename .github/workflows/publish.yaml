@@ -33,8 +33,6 @@ jobs:
           node-version: 20
       - name: Update .npmrc
         run: ./scripts/update-npmrc.sh
-      - name: Test !!!! TEMPORARY !!!!
-        run: cat ./ts/admin/.npmrc
       - name: Build
         run: make deps && make build 
       - name: Publish
