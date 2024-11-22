@@ -28,6 +28,7 @@ fi
 
 # Go to all subdirs in LANG and run the command
 shift
+EXIT_CODE=0
 for dir in $(ls -d $LANG/*); do
     # Skip if not a dir
     if [ ! -d $dir ]; then
@@ -35,5 +36,11 @@ for dir in $(ls -d $LANG/*); do
     fi
     echo "**** Running in ./$dir ********************************"
     (cd $dir && $@)
+    CODE=$?
+    if [ $CODE -ne 0 ]; then
+        EXIT_CODE=$CODE
+    fi
     echo ""
 done
+
+exit $EXIT_CODE
