@@ -1,10 +1,13 @@
 # Numeno public APIs
 
-Code for accessing Numeno public APIs in different languages.
+This repo contains contains for accessing Numeno public APIs in different languages.
 
 - [Typescript APIs](./ts/README.md)
 
-The PHP APIs are in separate GitHub repositories, for example [`numenoai/apis-php-art-rec`](https://github.com/numenoai/apis-php-art-rec).
+PHP wrappers for the APIs are in separate GitHub repositories:
+- [Persona API](https://github.com/numenoai/apis-php-persona)
+- [Article Recommender API](https://github.com/numenoai/apis-php-art-rec)
+- [Admin API](https://github.com/numenoai/apis-php-admin)
 
 ## Developement documentation
 
