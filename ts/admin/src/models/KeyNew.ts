@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Numeno Article Recommender API
- * ### Admin API  These are the admin APIs, not meant to be used by anyone but Numeno administration tools or the backend of the Numeno dashboard.
+ * Numeno Admin API
+ * ## Introduction  Use the Numeno Administration API to create API Keys and set their permissions (which we call Scopes). This API is meant to be used by administrators of your organization.  ## Scopes  Scopes are used to let API Keys access only certain parts of the API.  Scopes are expressed as a string of the form `api:resource:action`.  For example, from the Numeno Article Recommender API (`art-rec`):   - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.)   - `art-rec:feeds:write` - can write (and read) any Feed   - `art-rec:feeds:*` - can perform any action on Feeds   - `art-rec:*:read` - can read any resource on `art-rec`   - `*:*:*` - can do everything
  *
  * The version of the OpenAPI document: 1.0.0
  * Contact: support@numeno.ai
@@ -20,7 +20,7 @@ import { mapValues } from '../runtime'
  */
 export interface KeyNew {
   /**
-   * The scopes of the new key
+   * The Scopes to give the new Key access to.
    * @type {Array<string>}
    * @memberof KeyNew
    */

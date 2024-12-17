@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Numeno Article Recommender API
- * ### Admin API  These are the admin APIs, not meant to be used by anyone but Numeno administration tools or the backend of the Numeno dashboard.
+ * Numeno Admin API
+ * ## Introduction  Use the Numeno Administration API to create API Keys and set their permissions (which we call Scopes). This API is meant to be used by administrators of your organization.  ## Scopes  Scopes are used to let API Keys access only certain parts of the API.  Scopes are expressed as a string of the form `api:resource:action`.  For example, from the Numeno Article Recommender API (`art-rec`):   - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.)   - `art-rec:feeds:write` - can write (and read) any Feed   - `art-rec:feeds:*` - can perform any action on Feeds   - `art-rec:*:read` - can read any resource on `art-rec`   - `*:*:*` - can do everything
  *
  * The version of the OpenAPI document: 1.0.0
  * Contact: support@numeno.ai
@@ -17,13 +17,10 @@ import type {
   ErrorResponse,
   HealthCheck,
   KeyInfoFull,
+  KeyInfoList,
   KeyNew,
   KeyUpdate,
-  Keys,
-  UserInfo,
-  UserNew,
-  UserUpdate,
-  Users,
+  Scopes,
 } from '../models/index'
 import {
   ErrorResponseFromJSON,
@@ -32,36 +29,21 @@ import {
   HealthCheckToJSON,
   KeyInfoFullFromJSON,
   KeyInfoFullToJSON,
+  KeyInfoListFromJSON,
+  KeyInfoListToJSON,
   KeyNewFromJSON,
   KeyNewToJSON,
   KeyUpdateFromJSON,
   KeyUpdateToJSON,
-  KeysFromJSON,
-  KeysToJSON,
-  UserInfoFromJSON,
-  UserInfoToJSON,
-  UserNewFromJSON,
-  UserNewToJSON,
-  UserUpdateFromJSON,
-  UserUpdateToJSON,
-  UsersFromJSON,
-  UsersToJSON,
+  ScopesFromJSON,
+  ScopesToJSON,
 } from '../models/index'
 
-export interface CreateUserRequest {
-  userNew: UserNew
-}
-
-export interface CreateUserKeyRequest {
-  userId: string
+export interface CreateKeyRequest {
   keyNew?: KeyNew
 }
 
-export interface DeleteUserRequest {
-  idOrWebId: string
-}
-
-export interface DeleteUserKeyRequest {
+export interface DeleteKeyRequest {
   key: string
 }
 
@@ -70,26 +52,11 @@ export interface GetKeyRequest {
 }
 
 export interface GetKeysRequest {
-  userId?: string
   cursor?: string
   limit?: number
 }
 
-export interface GetUserRequest {
-  idOrWebId: string
-}
-
-export interface GetUsersRequest {
-  cursor?: string
-  limit?: number
-}
-
-export interface UpdateUserRequest {
-  idOrWebId: string
-  userUpdate: UserUpdate
-}
-
-export interface UpdateUserKeyRequest {
+export interface UpdateKeyRequest {
   key: string
   keyUpdate: KeyUpdate
 }
@@ -99,84 +66,22 @@ export interface UpdateUserKeyRequest {
  */
 export class DefaultApi extends runtime.BaseAPI {
   /**
-   * Create a new user
+   * Create a new Key and give it access to one or more Scopes from the various Numeno APIs.  Scopes are expressed as a string of the form `api:resource:action`: - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.) - `art-rec:feeds:write` - can write (and read) any Feed - `art-rec:feeds:*` - can perform any action on Feeds - `art-rec:*:read` - can read any resource on `art-rec` - `*:*:*` - can do everything
+   * Create a new Key for your organization
    */
-  async createUserRaw(
-    requestParameters: CreateUserRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<UserInfo>> {
-    if (requestParameters['userNew'] == null) {
-      throw new runtime.RequiredError(
-        'userNew',
-        'Required parameter "userNew" was null or undefined when calling createUser().',
-      )
-    }
-
-    const queryParameters: any = {}
-
-    const headerParameters: runtime.HTTPHeaders = {}
-
-    headerParameters['Content-Type'] = 'application/json'
-
-    if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
-    }
-
-    const response = await this.request(
-      {
-        path: `/v1/users`,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: UserNewToJSON(requestParameters['userNew']),
-      },
-      initOverrides,
-    )
-
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      UserInfoFromJSON(jsonValue),
-    )
-  }
-
-  /**
-   * Create a new user
-   */
-  async createUser(
-    requestParameters: CreateUserRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<UserInfo> {
-    const response = await this.createUserRaw(requestParameters, initOverrides)
-    return await response.value()
-  }
-
-  /**
-   * Create a new key for a user
-   */
-  async createUserKeyRaw(
-    requestParameters: CreateUserKeyRequest,
+  async createKeyRaw(
+    requestParameters: CreateKeyRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<KeyInfoFull>> {
-    if (requestParameters['userId'] == null) {
-      throw new runtime.RequiredError(
-        'userId',
-        'Required parameter "userId" was null or undefined when calling createUserKey().',
-      )
-    }
-
     const queryParameters: any = {}
-
-    if (requestParameters['userId'] != null) {
-      queryParameters['userId'] = requestParameters['userId']
-    }
 
     const headerParameters: runtime.HTTPHeaders = {}
 
     headerParameters['Content-Type'] = 'application/json'
 
     if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
     }
 
     const response = await this.request(
@@ -196,79 +101,29 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Create a new key for a user
+   * Create a new Key and give it access to one or more Scopes from the various Numeno APIs.  Scopes are expressed as a string of the form `api:resource:action`: - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.) - `art-rec:feeds:write` - can write (and read) any Feed - `art-rec:feeds:*` - can perform any action on Feeds - `art-rec:*:read` - can read any resource on `art-rec` - `*:*:*` - can do everything
+   * Create a new Key for your organization
    */
-  async createUserKey(
-    requestParameters: CreateUserKeyRequest,
+  async createKey(
+    requestParameters: CreateKeyRequest = {},
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<KeyInfoFull> {
-    const response = await this.createUserKeyRaw(
-      requestParameters,
-      initOverrides,
-    )
+    const response = await this.createKeyRaw(requestParameters, initOverrides)
     return await response.value()
   }
 
   /**
-   * Delete a user
+   * Permanently delete a specific API Key.
+   * Delete a Key
    */
-  async deleteUserRaw(
-    requestParameters: DeleteUserRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters['idOrWebId'] == null) {
-      throw new runtime.RequiredError(
-        'idOrWebId',
-        'Required parameter "idOrWebId" was null or undefined when calling deleteUser().',
-      )
-    }
-
-    const queryParameters: any = {}
-
-    const headerParameters: runtime.HTTPHeaders = {}
-
-    if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
-    }
-
-    const response = await this.request(
-      {
-        path: `/v1/users/{idOrWebId}`.replace(
-          `{${'idOrWebId'}}`,
-          encodeURIComponent(String(requestParameters['idOrWebId'])),
-        ),
-        method: 'DELETE',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    )
-
-    return new runtime.VoidApiResponse(response)
-  }
-
-  /**
-   * Delete a user
-   */
-  async deleteUser(
-    requestParameters: DeleteUserRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.deleteUserRaw(requestParameters, initOverrides)
-  }
-
-  /**
-   * Delete a key
-   */
-  async deleteUserKeyRaw(
-    requestParameters: DeleteUserKeyRequest,
+  async deleteKeyRaw(
+    requestParameters: DeleteKeyRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters['key'] == null) {
       throw new runtime.RequiredError(
         'key',
-        'Required parameter "key" was null or undefined when calling deleteUserKey().',
+        'Required parameter "key" was null or undefined when calling deleteKey().',
       )
     }
 
@@ -277,8 +132,8 @@ export class DefaultApi extends runtime.BaseAPI {
     const headerParameters: runtime.HTTPHeaders = {}
 
     if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
     }
 
     const response = await this.request(
@@ -298,17 +153,19 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Delete a key
+   * Permanently delete a specific API Key.
+   * Delete a Key
    */
-  async deleteUserKey(
-    requestParameters: DeleteUserKeyRequest,
+  async deleteKey(
+    requestParameters: DeleteKeyRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
-    await this.deleteUserKeyRaw(requestParameters, initOverrides)
+    await this.deleteKeyRaw(requestParameters, initOverrides)
   }
 
   /**
-   * Get information about a key
+   * Call this endpoint to get information about Key, inculding when it was created, last updated, and the set of Scopes it has access to.  Scopes are expressed as a string of the form `api:resource:action`: - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.) - `art-rec:feeds:write` - can write (and read) any Feed - `art-rec:feeds:*` - can perform any action on Feeds - `art-rec:*:read` - can read any resource on `art-rec` - `*:*:*` - can do everything
+   * Get detailed info about a Key
    */
   async getKeyRaw(
     requestParameters: GetKeyRequest,
@@ -326,8 +183,8 @@ export class DefaultApi extends runtime.BaseAPI {
     const headerParameters: runtime.HTTPHeaders = {}
 
     if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
     }
 
     const response = await this.request(
@@ -349,7 +206,8 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Get information about a key
+   * Call this endpoint to get information about Key, inculding when it was created, last updated, and the set of Scopes it has access to.  Scopes are expressed as a string of the form `api:resource:action`: - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.) - `art-rec:feeds:write` - can write (and read) any Feed - `art-rec:feeds:*` - can perform any action on Feeds - `art-rec:*:read` - can read any resource on `art-rec` - `*:*:*` - can do everything
+   * Get detailed info about a Key
    */
   async getKey(
     requestParameters: GetKeyRequest,
@@ -360,17 +218,14 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Get all keys, optionally for a user
+   * This endpoint returns a list of all Keys your organization has created.
+   * Get a list of all Keys for your organization
    */
   async getKeysRaw(
     requestParameters: GetKeysRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Keys>> {
+  ): Promise<runtime.ApiResponse<KeyInfoList>> {
     const queryParameters: any = {}
-
-    if (requestParameters['userId'] != null) {
-      queryParameters['userId'] = requestParameters['userId']
-    }
 
     if (requestParameters['cursor'] != null) {
       queryParameters['cursor'] = requestParameters['cursor']
@@ -383,8 +238,8 @@ export class DefaultApi extends runtime.BaseAPI {
     const headerParameters: runtime.HTTPHeaders = {}
 
     if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
     }
 
     const response = await this.request(
@@ -398,50 +253,36 @@ export class DefaultApi extends runtime.BaseAPI {
     )
 
     return new runtime.JSONApiResponse(response, (jsonValue) =>
-      KeysFromJSON(jsonValue),
+      KeyInfoListFromJSON(jsonValue),
     )
   }
 
   /**
-   * Get all keys, optionally for a user
+   * This endpoint returns a list of all Keys your organization has created.
+   * Get a list of all Keys for your organization
    */
   async getKeys(
     requestParameters: GetKeysRequest = {},
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Keys> {
+  ): Promise<KeyInfoList> {
     const response = await this.getKeysRaw(requestParameters, initOverrides)
     return await response.value()
   }
 
   /**
-   * Get information about a user
+   * Get a list of all the Scopes supported by the Numeno Admin API. Scopes are used to let API Keys access only certain parts of the API.  Scopes are expressed as a string of the form `api:resource:action`: - `admin:keys:read` - can read any Key (eg. `GET` `/keys`, `/keys/:id`, etc.) - `admin:keys:write` - can write (and read) any Key - `admin:keys:*` - can perform any action on Keys - `admin:*:read` - can read any resource on `admin` - `*:*:*` - can do everything
+   * Get the Scopes for this API
    */
-  async getUserRaw(
-    requestParameters: GetUserRequest,
+  async getScopesRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<UserInfo>> {
-    if (requestParameters['idOrWebId'] == null) {
-      throw new runtime.RequiredError(
-        'idOrWebId',
-        'Required parameter "idOrWebId" was null or undefined when calling getUser().',
-      )
-    }
-
+  ): Promise<runtime.ApiResponse<Scopes>> {
     const queryParameters: any = {}
 
     const headerParameters: runtime.HTTPHeaders = {}
 
-    if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
-    }
-
     const response = await this.request(
       {
-        path: `/v1/users/{idOrWebId}`.replace(
-          `{${'idOrWebId'}}`,
-          encodeURIComponent(String(requestParameters['idOrWebId'])),
-        ),
+        path: `/v1/scopes`,
         method: 'GET',
         headers: headerParameters,
         query: queryParameters,
@@ -450,72 +291,23 @@ export class DefaultApi extends runtime.BaseAPI {
     )
 
     return new runtime.JSONApiResponse(response, (jsonValue) =>
-      UserInfoFromJSON(jsonValue),
+      ScopesFromJSON(jsonValue),
     )
   }
 
   /**
-   * Get information about a user
+   * Get a list of all the Scopes supported by the Numeno Admin API. Scopes are used to let API Keys access only certain parts of the API.  Scopes are expressed as a string of the form `api:resource:action`: - `admin:keys:read` - can read any Key (eg. `GET` `/keys`, `/keys/:id`, etc.) - `admin:keys:write` - can write (and read) any Key - `admin:keys:*` - can perform any action on Keys - `admin:*:read` - can read any resource on `admin` - `*:*:*` - can do everything
+   * Get the Scopes for this API
    */
-  async getUser(
-    requestParameters: GetUserRequest,
+  async getScopes(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<UserInfo> {
-    const response = await this.getUserRaw(requestParameters, initOverrides)
+  ): Promise<Scopes> {
+    const response = await this.getScopesRaw(initOverrides)
     return await response.value()
   }
 
   /**
-   * Get all users
-   */
-  async getUsersRaw(
-    requestParameters: GetUsersRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Users>> {
-    const queryParameters: any = {}
-
-    if (requestParameters['cursor'] != null) {
-      queryParameters['cursor'] = requestParameters['cursor']
-    }
-
-    if (requestParameters['limit'] != null) {
-      queryParameters['limit'] = requestParameters['limit']
-    }
-
-    const headerParameters: runtime.HTTPHeaders = {}
-
-    if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
-    }
-
-    const response = await this.request(
-      {
-        path: `/v1/users`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    )
-
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      UsersFromJSON(jsonValue),
-    )
-  }
-
-  /**
-   * Get all users
-   */
-  async getUsers(
-    requestParameters: GetUsersRequest = {},
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Users> {
-    const response = await this.getUsersRaw(requestParameters, initOverrides)
-    return await response.value()
-  }
-
-  /**
+   * A health check endpoint. Returns a code indicating the health of the Admin service.
    * Check the health of the API
    */
   async healthCheckRaw(
@@ -541,6 +333,7 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * A health check endpoint. Returns a code indicating the health of the Admin service.
    * Check the health of the API
    */
   async healthCheck(
@@ -551,85 +344,24 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Update a user
+   * Update the set of Scopes a the specified Key has access to.  Scopes are expressed as a string of the form `api:resource:action`: - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.) - `art-rec:feeds:write` - can write (and read) any Feed - `art-rec:feeds:*` - can perform any action on Feeds - `art-rec:*:read` - can read any resource on `art-rec` - `*:*:*` - can do everything
+   * Update a Key
    */
-  async updateUserRaw(
-    requestParameters: UpdateUserRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<UserInfo>> {
-    if (requestParameters['idOrWebId'] == null) {
-      throw new runtime.RequiredError(
-        'idOrWebId',
-        'Required parameter "idOrWebId" was null or undefined when calling updateUser().',
-      )
-    }
-
-    if (requestParameters['userUpdate'] == null) {
-      throw new runtime.RequiredError(
-        'userUpdate',
-        'Required parameter "userUpdate" was null or undefined when calling updateUser().',
-      )
-    }
-
-    const queryParameters: any = {}
-
-    const headerParameters: runtime.HTTPHeaders = {}
-
-    headerParameters['Content-Type'] = 'application/json'
-
-    if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
-    }
-
-    const response = await this.request(
-      {
-        path: `/v1/users/{idOrWebId}`.replace(
-          `{${'idOrWebId'}}`,
-          encodeURIComponent(String(requestParameters['idOrWebId'])),
-        ),
-        method: 'PUT',
-        headers: headerParameters,
-        query: queryParameters,
-        body: UserUpdateToJSON(requestParameters['userUpdate']),
-      },
-      initOverrides,
-    )
-
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      UserInfoFromJSON(jsonValue),
-    )
-  }
-
-  /**
-   * Update a user
-   */
-  async updateUser(
-    requestParameters: UpdateUserRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<UserInfo> {
-    const response = await this.updateUserRaw(requestParameters, initOverrides)
-    return await response.value()
-  }
-
-  /**
-   * Update a key
-   */
-  async updateUserKeyRaw(
-    requestParameters: UpdateUserKeyRequest,
+  async updateKeyRaw(
+    requestParameters: UpdateKeyRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<KeyInfoFull>> {
     if (requestParameters['key'] == null) {
       throw new runtime.RequiredError(
         'key',
-        'Required parameter "key" was null or undefined when calling updateUserKey().',
+        'Required parameter "key" was null or undefined when calling updateKey().',
       )
     }
 
     if (requestParameters['keyUpdate'] == null) {
       throw new runtime.RequiredError(
         'keyUpdate',
-        'Required parameter "keyUpdate" was null or undefined when calling updateUserKey().',
+        'Required parameter "keyUpdate" was null or undefined when calling updateKey().',
       )
     }
 
@@ -640,8 +372,8 @@ export class DefaultApi extends runtime.BaseAPI {
     headerParameters['Content-Type'] = 'application/json'
 
     if (this.configuration && this.configuration.apiKey) {
-      headerParameters['X-Numeno-Admin-Key'] =
-        await this.configuration.apiKey('X-Numeno-Admin-Key') // ApiKeyAuth authentication
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
     }
 
     const response = await this.request(
@@ -664,16 +396,14 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Update a key
+   * Update the set of Scopes a the specified Key has access to.  Scopes are expressed as a string of the form `api:resource:action`: - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.) - `art-rec:feeds:write` - can write (and read) any Feed - `art-rec:feeds:*` - can perform any action on Feeds - `art-rec:*:read` - can read any resource on `art-rec` - `*:*:*` - can do everything
+   * Update a Key
    */
-  async updateUserKey(
-    requestParameters: UpdateUserKeyRequest,
+  async updateKey(
+    requestParameters: UpdateKeyRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<KeyInfoFull> {
-    const response = await this.updateUserKeyRaw(
-      requestParameters,
-      initOverrides,
-    )
+    const response = await this.updateKeyRaw(requestParameters, initOverrides)
     return await response.value()
   }
 }

@@ -1,3 +1,4 @@
+.openapi-generator-ignore
 apis/DefaultApi.ts
 apis/index.ts
 index.ts
@@ -6,12 +7,9 @@ models/ErrorResponse.ts
 models/HealthCheck.ts
 models/KeyInfo.ts
 models/KeyInfoFull.ts
+models/KeyInfoList.ts
 models/KeyNew.ts
 models/KeyUpdate.ts
-models/Keys.ts
-models/UserInfo.ts
-models/UserNew.ts
-models/UserUpdate.ts
-models/Users.ts
+models/Scopes.ts
 models/index.ts
 runtime.ts

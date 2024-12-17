@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Numeno Article Recommender API
- * ### Admin API  These are the admin APIs, not meant to be used by anyone but Numeno administration tools or the backend of the Numeno dashboard.
+ * Numeno Admin API
+ * ## Introduction  Use the Numeno Administration API to create API Keys and set their permissions (which we call Scopes). This API is meant to be used by administrators of your organization.  ## Scopes  Scopes are used to let API Keys access only certain parts of the API.  Scopes are expressed as a string of the form `api:resource:action`.  For example, from the Numeno Article Recommender API (`art-rec`):   - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.)   - `art-rec:feeds:write` - can write (and read) any Feed   - `art-rec:feeds:*` - can perform any action on Feeds   - `art-rec:*:read` - can read any resource on `art-rec`   - `*:*:*` - can do everything
  *
  * The version of the OpenAPI document: 1.0.0
  * Contact: support@numeno.ai
@@ -14,37 +14,31 @@
 
 import { mapValues } from '../runtime'
 /**
- * Information about an API key, including the scopes it has access to
+ * Information about an API Key, including the Scopes it has access to.
  * @export
  * @interface KeyInfoFull
  */
 export interface KeyInfoFull {
   /**
-   * The key that can be used to authenticate a request
+   * The Key that can be used to authenticate a request.
    * @type {string}
    * @memberof KeyInfoFull
    */
   key: string
   /**
-   * The user id that the key belongs to
-   * @type {string}
-   * @memberof KeyInfoFull
-   */
-  userId: string
-  /**
-   * The date the key was created in ISO 8601 datetime
+   * The date the Key was created in ISO 8601 UTC datetime.
    * @type {Date}
    * @memberof KeyInfoFull
    */
   createdAt?: Date
   /**
-   * The date the key was last modified in ISO 8601 datetime
+   * The date the Key was last updated in ISO 8601 UTC datetime.
    * @type {Date}
    * @memberof KeyInfoFull
    */
-  modifiedAt?: Date
+  updatedAt?: Date
   /**
-   * The scopes that the key has access to
+   * The Scopes that the Key has access to.
    * @type {Array<string>}
    * @memberof KeyInfoFull
    */
@@ -56,7 +50,6 @@ export interface KeyInfoFull {
  */
 export function instanceOfKeyInfoFull(value: object): value is KeyInfoFull {
   if (!('key' in value) || value['key'] === undefined) return false
-  if (!('userId' in value) || value['userId'] === undefined) return false
   return true
 }
 
@@ -73,11 +66,10 @@ export function KeyInfoFullFromJSONTyped(
   }
   return {
     key: json['key'],
-    userId: json['userId'],
     createdAt:
       json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    modifiedAt:
-      json['modifiedAt'] == null ? undefined : new Date(json['modifiedAt']),
+    updatedAt:
+      json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
     scopes: json['scopes'] == null ? undefined : json['scopes'],
   }
 }
@@ -96,13 +88,10 @@ export function KeyInfoFullToJSONTyped(
 
   return {
     key: value['key'],
-    userId: value['userId'],
     createdAt:
       value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
-    modifiedAt:
-      value['modifiedAt'] == null
-        ? undefined
-        : value['modifiedAt'].toISOString(),
+    updatedAt:
+      value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
     scopes: value['scopes'],
   }
 }

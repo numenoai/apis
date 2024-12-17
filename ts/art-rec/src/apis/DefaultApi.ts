@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Numeno Article Recommender API
- * ### Introduction  Use the Numeno Article Recommender API to get personalized article recommendations in three easy steps:  1. Define a Persona: Simply provide a description of your interests, vibe, and target audience.  2. Associate the Persona with a Feed.  3. Pull from the Feed to receive a curated selection of articles from across the web.  ### Cross-Origin Resource Sharing This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with  [W3C spec](https://www.w3.org/TR/cors/), allowing cross-domain communication from the browser. All responses have a wildcard same-origin policy which makes them accessible from any code on any site.
+ * ## Introduction  Use the Numeno Article Recommender API to receive a curated selection of articles from across the web.  See below for the steps to creating a Feed, as well as an introduction to the top-level concepts making up the Article Recommender API.  ## Steps to creating a Feed  1. Create a Feed - [`/feeds`](create-feed) 2. Create a number of Stream queries associated with the Feed - [`/feeds/:feedId/streams`](create-stream) 3. Pull from the Feed as the Feed refreshes - [`/feeds/:feedId/articles`](get-articles-in-feed) 4. Use those Article IDs to look up metadata for the Articles -[`/articles/:id`](get-article-by-id) 5. Visit the Article links and render to your server DB or client app.  ## Sources, Articles and Topics  A **Source** is a place where Articles come from, typically a website, a blog, or a knowledgebase endpoint. Sources can be queried for activity via the [`/sources`](get-sources) endpoint.  Beyond the Sources Numeno regaularly indexes, additional Sources can be associated with Stream queries, and Sources can be `allowlist`/`denylist`\'d.  **Articles** are the documents produced by Sources, typically pages from a blogpost or website, articles from a news source, or posts from a social platform or company intranet.  See the [`/articles`](search-articles) endpoint.  **Topics**  - Numeno has millions of Topics that it associates with Articles when they are sourced.  Topics are used in Stream queries, which themselves are composed to create Feeds.  Get topics via the [`/topics`](get-topics) endpoint.  ## Feeds  **A Feed is a collection of Streams.** Feeds are configured to refresh on a regular schedule.  No new Articles are published to a Feed except when it\'s refreshed.  Feeds can be refreshed manually if the API Key Scopes allow.  You can ask for Articles chronologically or by decreasing score.  You can also limit Articles to a date-range, meaning that you can produce Feeds from historical content.  Interact with Feeds via the [`/feeds`](create-feed) endpoint.  ## Streams  Think of a **Stream** as a search query with a \"volume control knob\".  It\'s a collection of Topics that you\'re interested and a collection of Sources you\'d explicitly like to include or exclude. Streams are associated with a Feed, and a collection of Streams produce the sequence of Articles that appear when a Feed is refreshed.  The \"volume control knob\" on a Stream is a way to decide how many of the search results from the Stream query are included in the Feed. Our searches are \"soft\", and with a such a rich `Article x Topic` space to draw on, the \"volume control\" allows you to put a cuttoff on what you\'d like included.  Streams are a nested resource of `/feeds` - get started by explorting [`/feeds/:feedId/streams`](create-stream).
  *
  * The version of the OpenAPI document: 1.0.0
  * Contact: support@numeno.ai
@@ -14,38 +14,107 @@
 
 import * as runtime from '../runtime'
 import type {
+  Article,
+  ArticleShortList,
   ErrorResponse,
-  Feed,
+  FeedArticleList,
+  FeedFull,
+  FeedList,
   FeedNew,
   FeedUpdate,
-  Feeds,
   HealthCheck,
+  QueryOrContinuation,
+  Scopes,
+  SearchArticleList,
+  SourceAndCountList,
+  Stream,
+  StreamList,
+  StreamNew,
+  StreamUpdate,
+  TopicAndWeightList,
 } from '../models/index'
 import {
+  ArticleFromJSON,
+  ArticleToJSON,
+  ArticleShortListFromJSON,
+  ArticleShortListToJSON,
   ErrorResponseFromJSON,
   ErrorResponseToJSON,
-  FeedFromJSON,
-  FeedToJSON,
+  FeedArticleListFromJSON,
+  FeedArticleListToJSON,
+  FeedFullFromJSON,
+  FeedFullToJSON,
+  FeedListFromJSON,
+  FeedListToJSON,
   FeedNewFromJSON,
   FeedNewToJSON,
   FeedUpdateFromJSON,
   FeedUpdateToJSON,
-  FeedsFromJSON,
-  FeedsToJSON,
   HealthCheckFromJSON,
   HealthCheckToJSON,
+  QueryOrContinuationFromJSON,
+  QueryOrContinuationToJSON,
+  ScopesFromJSON,
+  ScopesToJSON,
+  SearchArticleListFromJSON,
+  SearchArticleListToJSON,
+  SourceAndCountListFromJSON,
+  SourceAndCountListToJSON,
+  StreamFromJSON,
+  StreamToJSON,
+  StreamListFromJSON,
+  StreamListToJSON,
+  StreamNewFromJSON,
+  StreamNewToJSON,
+  StreamUpdateFromJSON,
+  StreamUpdateToJSON,
+  TopicAndWeightListFromJSON,
+  TopicAndWeightListToJSON,
 } from '../models/index'
 
 export interface CreateFeedRequest {
   feedNew: FeedNew
 }
 
-export interface DeleteFeedRequest {
+export interface CreateStreamRequest {
   feedId: string
+  streamNew: StreamNew
+}
+
+export interface DeleteFeedRequest {
+  id: string
+}
+
+export interface DeleteStreamRequest {
+  feedId: string
+  id: string
+}
+
+export interface GetArticleByIdRequest {
+  id: string
+  full?: boolean
+}
+
+export interface GetArticlesRequest {
+  cursor?: string
+  limit?: number
+  from?: string
+  to?: string
+}
+
+export interface GetArticlesInFeedRequest {
+  feedId: string
+  masked?: boolean
+  from?: string
+  to?: string
+  sort?: GetArticlesInFeedSortEnum
+  dateToUse?: GetArticlesInFeedDateToUseEnum
+  cursor?: string
+  limit?: number
 }
 
 export interface GetFeedByIdRequest {
-  feedId: string
+  id: string
 }
 
 export interface GetFeedsRequest {
@@ -53,9 +122,48 @@ export interface GetFeedsRequest {
   limit?: number
 }
 
-export interface UpdateFeedRequest {
+export interface GetSourcesRequest {
+  cursor?: string
+  limit?: number
+  from?: string
+  to?: string
+}
+
+export interface GetStreamByIdRequest {
   feedId: string
+  id: string
+}
+
+export interface GetStreamsRequest {
+  feedId: string
+  cursor?: string
+  limit?: number
+}
+
+export interface GetTopicsRequest {
+  cursor?: string
+  limit?: number
+  from?: string
+  to?: string
+}
+
+export interface RefreshFeedRequest {
+  feedId: string
+}
+
+export interface SearchArticlesRequest {
+  queryOrContinuation: QueryOrContinuation
+}
+
+export interface UpdateFeedRequest {
+  id: string
   feedUpdate: FeedUpdate
+}
+
+export interface UpdateStreamRequest {
+  feedId: string
+  id: string
+  streamUpdate: StreamUpdate
 }
 
 /**
@@ -63,12 +171,13 @@ export interface UpdateFeedRequest {
  */
 export class DefaultApi extends runtime.BaseAPI {
   /**
-   * Create a new feed
+   * A Feed is a collection of Stream queries which produces Articles on a regular schedule.  When creating a Feed, you specify:   - A friendly `name` for the Feed - these names are not unique and are   for convenience only.    - A refresh `schedule` - the rate at which the Feed automatically   refreshes (default is `daily`)    - A `tuner` object - a piece of natrual-language text used to further   refine Article scoring as a Feed is refreshed. The Tuner object   provides resonable defaults for deduplicating articles and filtering   out listicles.  Once a Feed has been created, add Streams to it via [`/feeds/:feedId/ streams`](create-stream)  The maximum number of Feeds you can create depends on your subscription plan.
+   * Create a new Feed
    */
   async createFeedRaw(
     requestParameters: CreateFeedRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Feed>> {
+  ): Promise<runtime.ApiResponse<FeedFull>> {
     if (requestParameters['feedNew'] == null) {
       throw new runtime.RequiredError(
         'feedNew',
@@ -99,32 +208,100 @@ export class DefaultApi extends runtime.BaseAPI {
     )
 
     return new runtime.JSONApiResponse(response, (jsonValue) =>
-      FeedFromJSON(jsonValue),
+      FeedFullFromJSON(jsonValue),
     )
   }
 
   /**
-   * Create a new feed
+   * A Feed is a collection of Stream queries which produces Articles on a regular schedule.  When creating a Feed, you specify:   - A friendly `name` for the Feed - these names are not unique and are   for convenience only.    - A refresh `schedule` - the rate at which the Feed automatically   refreshes (default is `daily`)    - A `tuner` object - a piece of natrual-language text used to further   refine Article scoring as a Feed is refreshed. The Tuner object   provides resonable defaults for deduplicating articles and filtering   out listicles.  Once a Feed has been created, add Streams to it via [`/feeds/:feedId/ streams`](create-stream)  The maximum number of Feeds you can create depends on your subscription plan.
+   * Create a new Feed
    */
   async createFeed(
     requestParameters: CreateFeedRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Feed> {
+  ): Promise<FeedFull> {
     const response = await this.createFeedRaw(requestParameters, initOverrides)
     return await response.value()
   }
 
   /**
-   * Delete a feed by ID
+   * A Stream is a query triggered on a regular schedule and used to generate content for a Feed.  When creating a Stream, you specify:   - A friendly `name` for the Stream - these names are not unique and   are for convenience only.    - A `query` - a search query to be run regularly, including the daily   amount of articles you would like the Stream to generate.  The maximum number of Streams you can create depends on your subscription plan.
+   * Create a new Stream for a Feed
+   */
+  async createStreamRaw(
+    requestParameters: CreateStreamRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Stream>> {
+    if (requestParameters['feedId'] == null) {
+      throw new runtime.RequiredError(
+        'feedId',
+        'Required parameter "feedId" was null or undefined when calling createStream().',
+      )
+    }
+
+    if (requestParameters['streamNew'] == null) {
+      throw new runtime.RequiredError(
+        'streamNew',
+        'Required parameter "streamNew" was null or undefined when calling createStream().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    headerParameters['Content-Type'] = 'application/json'
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/feeds/{feedId}/streams`.replace(
+          `{${'feedId'}}`,
+          encodeURIComponent(String(requestParameters['feedId'])),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: StreamNewToJSON(requestParameters['streamNew']),
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      StreamFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * A Stream is a query triggered on a regular schedule and used to generate content for a Feed.  When creating a Stream, you specify:   - A friendly `name` for the Stream - these names are not unique and   are for convenience only.    - A `query` - a search query to be run regularly, including the daily   amount of articles you would like the Stream to generate.  The maximum number of Streams you can create depends on your subscription plan.
+   * Create a new Stream for a Feed
+   */
+  async createStream(
+    requestParameters: CreateStreamRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Stream> {
+    const response = await this.createStreamRaw(
+      requestParameters,
+      initOverrides,
+    )
+    return await response.value()
+  }
+
+  /**
+   * Delete a Feed by ID
    */
   async deleteFeedRaw(
     requestParameters: DeleteFeedRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters['feedId'] == null) {
+    if (requestParameters['id'] == null) {
       throw new runtime.RequiredError(
-        'feedId',
-        'Required parameter "feedId" was null or undefined when calling deleteFeed().',
+        'id',
+        'Required parameter "id" was null or undefined when calling deleteFeed().',
       )
     }
 
@@ -139,9 +316,9 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const response = await this.request(
       {
-        path: `/v1/feeds/{feedId}`.replace(
-          `{${'feedId'}}`,
-          encodeURIComponent(String(requestParameters['feedId'])),
+        path: `/v1/feeds/{id}`.replace(
+          `{${'id'}}`,
+          encodeURIComponent(String(requestParameters['id'])),
         ),
         method: 'DELETE',
         headers: headerParameters,
@@ -154,7 +331,7 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Delete a feed by ID
+   * Delete a Feed by ID
    */
   async deleteFeed(
     requestParameters: DeleteFeedRequest,
@@ -164,16 +341,23 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Get a specific feed by ID
+   * Delete a Stream by ID
    */
-  async getFeedByIdRaw(
-    requestParameters: GetFeedByIdRequest,
+  async deleteStreamRaw(
+    requestParameters: DeleteStreamRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Feed>> {
+  ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters['feedId'] == null) {
       throw new runtime.RequiredError(
         'feedId',
-        'Required parameter "feedId" was null or undefined when calling getFeedById().',
+        'Required parameter "feedId" was null or undefined when calling deleteStream().',
+      )
+    }
+
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling deleteStream().',
       )
     }
 
@@ -188,7 +372,207 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const response = await this.request(
       {
-        path: `/v1/feeds/{feedId}`.replace(
+        path: `/v1/feeds/{feedId}/streams/{id}`
+          .replace(
+            `{${'feedId'}}`,
+            encodeURIComponent(String(requestParameters['feedId'])),
+          )
+          .replace(
+            `{${'id'}}`,
+            encodeURIComponent(String(requestParameters['id'])),
+          ),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.VoidApiResponse(response)
+  }
+
+  /**
+   * Delete a Stream by ID
+   */
+  async deleteStream(
+    requestParameters: DeleteStreamRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteStreamRaw(requestParameters, initOverrides)
+  }
+
+  /**
+   * Get a specific Article by ID
+   */
+  async getArticleByIdRaw(
+    requestParameters: GetArticleByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Article>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling getArticleById().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    if (requestParameters['full'] != null) {
+      queryParameters['full'] = requestParameters['full']
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/articles/{id}`.replace(
+          `{${'id'}}`,
+          encodeURIComponent(String(requestParameters['id'])),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      ArticleFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Get a specific Article by ID
+   */
+  async getArticleById(
+    requestParameters: GetArticleByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Article> {
+    const response = await this.getArticleByIdRaw(
+      requestParameters,
+      initOverrides,
+    )
+    return await response.value()
+  }
+
+  /**
+   * Get a list of all Articles
+   */
+  async getArticlesRaw(
+    requestParameters: GetArticlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ArticleShortList>> {
+    const queryParameters: any = {}
+
+    if (requestParameters['cursor'] != null) {
+      queryParameters['cursor'] = requestParameters['cursor']
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit']
+    }
+
+    if (requestParameters['from'] != null) {
+      queryParameters['from'] = requestParameters['from']
+    }
+
+    if (requestParameters['to'] != null) {
+      queryParameters['to'] = requestParameters['to']
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/articles`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      ArticleShortListFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Get a list of all Articles
+   */
+  async getArticles(
+    requestParameters: GetArticlesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ArticleShortList> {
+    const response = await this.getArticlesRaw(requestParameters, initOverrides)
+    return await response.value()
+  }
+
+  /**
+   * Call this endpoint to get a list of Articles that are currently published to the Feed.  New Articles will appear according to the Feed\'s refresh sechedule.  A number of optional paramaters can be specified when pulling Articles from a Feed, most notably the following:  - `limit` - Sets the number of Articles to return in the response.  - `masked` - If the `tuner` associated with this Feed can mask out duplicate Articles (the default), you can specify the `masked` flag when fetching Articles so that masked Articles are included in the response.  - `from` and `to` - Optionally provide a date interval to return Articles only in this period.  - `sort` - By default, Articles are ordered reverse chronologically; use this property to sort by Article score instead.  - `dateToUse` - By default, dates refer to inidividual Article publishing dates; instead, you can use Article indexing dates.  - `cursor` - Use for paging results; originates from the previous response.
+   * Get a list of all Articles in a Feed
+   */
+  async getArticlesInFeedRaw(
+    requestParameters: GetArticlesInFeedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<FeedArticleList>> {
+    if (requestParameters['feedId'] == null) {
+      throw new runtime.RequiredError(
+        'feedId',
+        'Required parameter "feedId" was null or undefined when calling getArticlesInFeed().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    if (requestParameters['masked'] != null) {
+      queryParameters['masked'] = requestParameters['masked']
+    }
+
+    if (requestParameters['from'] != null) {
+      queryParameters['from'] = requestParameters['from']
+    }
+
+    if (requestParameters['to'] != null) {
+      queryParameters['to'] = requestParameters['to']
+    }
+
+    if (requestParameters['sort'] != null) {
+      queryParameters['sort'] = requestParameters['sort']
+    }
+
+    if (requestParameters['dateToUse'] != null) {
+      queryParameters['dateToUse'] = requestParameters['dateToUse']
+    }
+
+    if (requestParameters['cursor'] != null) {
+      queryParameters['cursor'] = requestParameters['cursor']
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit']
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/feeds/{feedId}/articles`.replace(
           `{${'feedId'}}`,
           encodeURIComponent(String(requestParameters['feedId'])),
         ),
@@ -200,28 +584,85 @@ export class DefaultApi extends runtime.BaseAPI {
     )
 
     return new runtime.JSONApiResponse(response, (jsonValue) =>
-      FeedFromJSON(jsonValue),
+      FeedArticleListFromJSON(jsonValue),
     )
   }
 
   /**
-   * Get a specific feed by ID
+   * Call this endpoint to get a list of Articles that are currently published to the Feed.  New Articles will appear according to the Feed\'s refresh sechedule.  A number of optional paramaters can be specified when pulling Articles from a Feed, most notably the following:  - `limit` - Sets the number of Articles to return in the response.  - `masked` - If the `tuner` associated with this Feed can mask out duplicate Articles (the default), you can specify the `masked` flag when fetching Articles so that masked Articles are included in the response.  - `from` and `to` - Optionally provide a date interval to return Articles only in this period.  - `sort` - By default, Articles are ordered reverse chronologically; use this property to sort by Article score instead.  - `dateToUse` - By default, dates refer to inidividual Article publishing dates; instead, you can use Article indexing dates.  - `cursor` - Use for paging results; originates from the previous response.
+   * Get a list of all Articles in a Feed
+   */
+  async getArticlesInFeed(
+    requestParameters: GetArticlesInFeedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<FeedArticleList> {
+    const response = await this.getArticlesInFeedRaw(
+      requestParameters,
+      initOverrides,
+    )
+    return await response.value()
+  }
+
+  /**
+   * Get a specific Feed by ID
+   */
+  async getFeedByIdRaw(
+    requestParameters: GetFeedByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<FeedFull>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling getFeedById().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/feeds/{id}`.replace(
+          `{${'id'}}`,
+          encodeURIComponent(String(requestParameters['id'])),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      FeedFullFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Get a specific Feed by ID
    */
   async getFeedById(
     requestParameters: GetFeedByIdRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Feed> {
+  ): Promise<FeedFull> {
     const response = await this.getFeedByIdRaw(requestParameters, initOverrides)
     return await response.value()
   }
 
   /**
-   * Get a list of all feeds
+   * Returns a list of all Feeds your API Key has acccess to.  Use `limit` to set the number of Feeds to return in the response.  Use `cursor` for paging results.
+   * Get a list of all Feeds
    */
   async getFeedsRaw(
     requestParameters: GetFeedsRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Feeds>> {
+  ): Promise<runtime.ApiResponse<FeedList>> {
     const queryParameters: any = {}
 
     if (requestParameters['cursor'] != null) {
@@ -250,22 +691,308 @@ export class DefaultApi extends runtime.BaseAPI {
     )
 
     return new runtime.JSONApiResponse(response, (jsonValue) =>
-      FeedsFromJSON(jsonValue),
+      FeedListFromJSON(jsonValue),
     )
   }
 
   /**
-   * Get a list of all feeds
+   * Returns a list of all Feeds your API Key has acccess to.  Use `limit` to set the number of Feeds to return in the response.  Use `cursor` for paging results.
+   * Get a list of all Feeds
    */
   async getFeeds(
     requestParameters: GetFeedsRequest = {},
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Feeds> {
+  ): Promise<FeedList> {
     const response = await this.getFeedsRaw(requestParameters, initOverrides)
     return await response.value()
   }
 
   /**
+   * Get a list of all the Scopes supported by the Numeno Article Recommender API. Scopes are used to let API Keys access only certain parts of the API.  Scopes are expressed as a string of the form `api:resource:action`: - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.) - `art-rec:feeds:write` - can write (and read) any Feed - `art-rec:feeds:*` - can perform any action on Feeds - `art-rec:*:read` - can read any resource on `art-rec` - `*:*:*` - can do everything
+   * Get the Scopes for this API
+   */
+  async getScopesRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Scopes>> {
+    const queryParameters: any = {}
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    const response = await this.request(
+      {
+        path: `/v1/scopes`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      ScopesFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Get a list of all the Scopes supported by the Numeno Article Recommender API. Scopes are used to let API Keys access only certain parts of the API.  Scopes are expressed as a string of the form `api:resource:action`: - `art-rec:feeds:read` - can read any Feed (eg. `GET` `/feeds`, `/feeds/:id`, `/feeds/:id/streams`, etc.) - `art-rec:feeds:write` - can write (and read) any Feed - `art-rec:feeds:*` - can perform any action on Feeds - `art-rec:*:read` - can read any resource on `art-rec` - `*:*:*` - can do everything
+   * Get the Scopes for this API
+   */
+  async getScopes(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Scopes> {
+    const response = await this.getScopesRaw(initOverrides)
+    return await response.value()
+  }
+
+  /**
+   * Get a list of all Sources (websites) and how many Articles they have produced over a given date range.
+   * Get Sources and their Articles
+   */
+  async getSourcesRaw(
+    requestParameters: GetSourcesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<SourceAndCountList>> {
+    const queryParameters: any = {}
+
+    if (requestParameters['cursor'] != null) {
+      queryParameters['cursor'] = requestParameters['cursor']
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit']
+    }
+
+    if (requestParameters['from'] != null) {
+      queryParameters['from'] = requestParameters['from']
+    }
+
+    if (requestParameters['to'] != null) {
+      queryParameters['to'] = requestParameters['to']
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/sources`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      SourceAndCountListFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Get a list of all Sources (websites) and how many Articles they have produced over a given date range.
+   * Get Sources and their Articles
+   */
+  async getSources(
+    requestParameters: GetSourcesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<SourceAndCountList> {
+    const response = await this.getSourcesRaw(requestParameters, initOverrides)
+    return await response.value()
+  }
+
+  /**
+   * Get a specific Stream by ID
+   */
+  async getStreamByIdRaw(
+    requestParameters: GetStreamByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Stream>> {
+    if (requestParameters['feedId'] == null) {
+      throw new runtime.RequiredError(
+        'feedId',
+        'Required parameter "feedId" was null or undefined when calling getStreamById().',
+      )
+    }
+
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling getStreamById().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/feeds/{feedId}/streams/{id}`
+          .replace(
+            `{${'feedId'}}`,
+            encodeURIComponent(String(requestParameters['feedId'])),
+          )
+          .replace(
+            `{${'id'}}`,
+            encodeURIComponent(String(requestParameters['id'])),
+          ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      StreamFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Get a specific Stream by ID
+   */
+  async getStreamById(
+    requestParameters: GetStreamByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Stream> {
+    const response = await this.getStreamByIdRaw(
+      requestParameters,
+      initOverrides,
+    )
+    return await response.value()
+  }
+
+  /**
+   * Get a list of all Streams in a Feed
+   */
+  async getStreamsRaw(
+    requestParameters: GetStreamsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<StreamList>> {
+    if (requestParameters['feedId'] == null) {
+      throw new runtime.RequiredError(
+        'feedId',
+        'Required parameter "feedId" was null or undefined when calling getStreams().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    if (requestParameters['cursor'] != null) {
+      queryParameters['cursor'] = requestParameters['cursor']
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit']
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/feeds/{feedId}/streams`.replace(
+          `{${'feedId'}}`,
+          encodeURIComponent(String(requestParameters['feedId'])),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      StreamListFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Get a list of all Streams in a Feed
+   */
+  async getStreams(
+    requestParameters: GetStreamsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<StreamList> {
+    const response = await this.getStreamsRaw(requestParameters, initOverrides)
+    return await response.value()
+  }
+
+  /**
+   * Get a list of all Topics and their weights, that were produced over a given date range.
+   * Get a list of all Topics
+   */
+  async getTopicsRaw(
+    requestParameters: GetTopicsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<TopicAndWeightList>> {
+    const queryParameters: any = {}
+
+    if (requestParameters['cursor'] != null) {
+      queryParameters['cursor'] = requestParameters['cursor']
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit']
+    }
+
+    if (requestParameters['from'] != null) {
+      queryParameters['from'] = requestParameters['from']
+    }
+
+    if (requestParameters['to'] != null) {
+      queryParameters['to'] = requestParameters['to']
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/topics`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      TopicAndWeightListFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Get a list of all Topics and their weights, that were produced over a given date range.
+   * Get a list of all Topics
+   */
+  async getTopics(
+    requestParameters: GetTopicsRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<TopicAndWeightList> {
+    const response = await this.getTopicsRaw(requestParameters, initOverrides)
+    return await response.value()
+  }
+
+  /**
+   * A health check endpoint. Returns a code indicating the health of the Article Recommender service.
    * Check the health of the API
    */
   async healthCheckRaw(
@@ -291,6 +1018,7 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * A health check endpoint. Returns a code indicating the health of the Article Recommender service.
    * Check the health of the API
    */
   async healthCheck(
@@ -301,16 +1029,124 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Update a feed by ID
+   * When a Feed refreshes, new Articles appear in the Feed. By default, Feeds will refresh on a schedule. However, you can manually force a Feed to refresh immediately by hitting this endpoint.  Caveat: you need explicit permission to manually refresh a Feed. These permissions will be attached to your API Key Scopes. Contact the Numeno team for details.
+   * Force a Feed to refresh
+   */
+  async refreshFeedRaw(
+    requestParameters: RefreshFeedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['feedId'] == null) {
+      throw new runtime.RequiredError(
+        'feedId',
+        'Required parameter "feedId" was null or undefined when calling refreshFeed().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/feeds/{feedId}/refresh`.replace(
+          `{${'feedId'}}`,
+          encodeURIComponent(String(requestParameters['feedId'])),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    )
+
+    return new runtime.VoidApiResponse(response)
+  }
+
+  /**
+   * When a Feed refreshes, new Articles appear in the Feed. By default, Feeds will refresh on a schedule. However, you can manually force a Feed to refresh immediately by hitting this endpoint.  Caveat: you need explicit permission to manually refresh a Feed. These permissions will be attached to your API Key Scopes. Contact the Numeno team for details.
+   * Force a Feed to refresh
+   */
+  async refreshFeed(
+    requestParameters: RefreshFeedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.refreshFeedRaw(requestParameters, initOverrides)
+  }
+
+  /**
+   * Search for Articles
+   */
+  async searchArticlesRaw(
+    requestParameters: SearchArticlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<SearchArticleList>> {
+    if (requestParameters['queryOrContinuation'] == null) {
+      throw new runtime.RequiredError(
+        'queryOrContinuation',
+        'Required parameter "queryOrContinuation" was null or undefined when calling searchArticles().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    headerParameters['Content-Type'] = 'application/json'
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/articles/search`,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: QueryOrContinuationToJSON(
+          requestParameters['queryOrContinuation'],
+        ),
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      SearchArticleListFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Search for Articles
+   */
+  async searchArticles(
+    requestParameters: SearchArticlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<SearchArticleList> {
+    const response = await this.searchArticlesRaw(
+      requestParameters,
+      initOverrides,
+    )
+    return await response.value()
+  }
+
+  /**
+   * Update a Feed by ID
    */
   async updateFeedRaw(
     requestParameters: UpdateFeedRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Feed>> {
-    if (requestParameters['feedId'] == null) {
+  ): Promise<runtime.ApiResponse<FeedFull>> {
+    if (requestParameters['id'] == null) {
       throw new runtime.RequiredError(
-        'feedId',
-        'Required parameter "feedId" was null or undefined when calling updateFeed().',
+        'id',
+        'Required parameter "id" was null or undefined when calling updateFeed().',
       )
     }
 
@@ -334,9 +1170,9 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const response = await this.request(
       {
-        path: `/v1/feeds/{feedId}`.replace(
-          `{${'feedId'}}`,
-          encodeURIComponent(String(requestParameters['feedId'])),
+        path: `/v1/feeds/{id}`.replace(
+          `{${'id'}}`,
+          encodeURIComponent(String(requestParameters['id'])),
         ),
         method: 'PUT',
         headers: headerParameters,
@@ -347,18 +1183,114 @@ export class DefaultApi extends runtime.BaseAPI {
     )
 
     return new runtime.JSONApiResponse(response, (jsonValue) =>
-      FeedFromJSON(jsonValue),
+      FeedFullFromJSON(jsonValue),
     )
   }
 
   /**
-   * Update a feed by ID
+   * Update a Feed by ID
    */
   async updateFeed(
     requestParameters: UpdateFeedRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Feed> {
+  ): Promise<FeedFull> {
     const response = await this.updateFeedRaw(requestParameters, initOverrides)
     return await response.value()
   }
+
+  /**
+   * Update a Stream by ID
+   */
+  async updateStreamRaw(
+    requestParameters: UpdateStreamRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Stream>> {
+    if (requestParameters['feedId'] == null) {
+      throw new runtime.RequiredError(
+        'feedId',
+        'Required parameter "feedId" was null or undefined when calling updateStream().',
+      )
+    }
+
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling updateStream().',
+      )
+    }
+
+    if (requestParameters['streamUpdate'] == null) {
+      throw new runtime.RequiredError(
+        'streamUpdate',
+        'Required parameter "streamUpdate" was null or undefined when calling updateStream().',
+      )
+    }
+
+    const queryParameters: any = {}
+
+    const headerParameters: runtime.HTTPHeaders = {}
+
+    headerParameters['Content-Type'] = 'application/json'
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['X-Numeno-Key'] =
+        await this.configuration.apiKey('X-Numeno-Key') // ApiKeyAuth authentication
+    }
+
+    const response = await this.request(
+      {
+        path: `/v1/feeds/{feedId}/streams/{id}`
+          .replace(
+            `{${'feedId'}}`,
+            encodeURIComponent(String(requestParameters['feedId'])),
+          )
+          .replace(
+            `{${'id'}}`,
+            encodeURIComponent(String(requestParameters['id'])),
+          ),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: StreamUpdateToJSON(requestParameters['streamUpdate']),
+      },
+      initOverrides,
+    )
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      StreamFromJSON(jsonValue),
+    )
+  }
+
+  /**
+   * Update a Stream by ID
+   */
+  async updateStream(
+    requestParameters: UpdateStreamRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Stream> {
+    const response = await this.updateStreamRaw(
+      requestParameters,
+      initOverrides,
+    )
+    return await response.value()
+  }
 }
+
+/**
+ * @export
+ */
+export const GetArticlesInFeedSortEnum = {
+  Date: 'date',
+  Score: 'score',
+} as const
+export type GetArticlesInFeedSortEnum =
+  (typeof GetArticlesInFeedSortEnum)[keyof typeof GetArticlesInFeedSortEnum]
+/**
+ * @export
+ */
+export const GetArticlesInFeedDateToUseEnum = {
+  Published: 'published',
+  Added: 'added',
+} as const
+export type GetArticlesInFeedDateToUseEnum =
+  (typeof GetArticlesInFeedDateToUseEnum)[keyof typeof GetArticlesInFeedDateToUseEnum]

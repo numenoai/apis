@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Numeno Article Recommender API
- * ### Introduction  Use the Numeno Article Recommender API to get personalized article recommendations in three easy steps:  1. Define a Persona: Simply provide a description of your interests, vibe, and target audience.  2. Associate the Persona with a Feed.  3. Pull from the Feed to receive a curated selection of articles from across the web.  ### Cross-Origin Resource Sharing This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with  [W3C spec](https://www.w3.org/TR/cors/), allowing cross-domain communication from the browser. All responses have a wildcard same-origin policy which makes them accessible from any code on any site.
+ * ## Introduction  Use the Numeno Article Recommender API to receive a curated selection of articles from across the web.  See below for the steps to creating a Feed, as well as an introduction to the top-level concepts making up the Article Recommender API.  ## Steps to creating a Feed  1. Create a Feed - [`/feeds`](create-feed) 2. Create a number of Stream queries associated with the Feed - [`/feeds/:feedId/streams`](create-stream) 3. Pull from the Feed as the Feed refreshes - [`/feeds/:feedId/articles`](get-articles-in-feed) 4. Use those Article IDs to look up metadata for the Articles -[`/articles/:id`](get-article-by-id) 5. Visit the Article links and render to your server DB or client app.  ## Sources, Articles and Topics  A **Source** is a place where Articles come from, typically a website, a blog, or a knowledgebase endpoint. Sources can be queried for activity via the [`/sources`](get-sources) endpoint.  Beyond the Sources Numeno regaularly indexes, additional Sources can be associated with Stream queries, and Sources can be `allowlist`/`denylist`\'d.  **Articles** are the documents produced by Sources, typically pages from a blogpost or website, articles from a news source, or posts from a social platform or company intranet.  See the [`/articles`](search-articles) endpoint.  **Topics**  - Numeno has millions of Topics that it associates with Articles when they are sourced.  Topics are used in Stream queries, which themselves are composed to create Feeds.  Get topics via the [`/topics`](get-topics) endpoint.  ## Feeds  **A Feed is a collection of Streams.** Feeds are configured to refresh on a regular schedule.  No new Articles are published to a Feed except when it\'s refreshed.  Feeds can be refreshed manually if the API Key Scopes allow.  You can ask for Articles chronologically or by decreasing score.  You can also limit Articles to a date-range, meaning that you can produce Feeds from historical content.  Interact with Feeds via the [`/feeds`](create-feed) endpoint.  ## Streams  Think of a **Stream** as a search query with a \"volume control knob\".  It\'s a collection of Topics that you\'re interested and a collection of Sources you\'d explicitly like to include or exclude. Streams are associated with a Feed, and a collection of Streams produce the sequence of Articles that appear when a Feed is refreshed.  The \"volume control knob\" on a Stream is a way to decide how many of the search results from the Stream query are included in the Feed. Our searches are \"soft\", and with a such a rich `Article x Topic` space to draw on, the \"volume control\" allows you to put a cuttoff on what you\'d like included.  Streams are a nested resource of `/feeds` - get started by explorting [`/feeds/:feedId/streams`](create-stream).
  *
  * The version of the OpenAPI document: 1.0.0
  * Contact: support@numeno.ai
@@ -13,45 +13,77 @@
  */
 
 import { mapValues } from '../runtime'
+import type { FeedTuner } from './FeedTuner'
+import {
+  FeedTunerFromJSON,
+  FeedTunerFromJSONTyped,
+  FeedTunerToJSON,
+  FeedTunerToJSONTyped,
+} from './FeedTuner'
+import type { FeedSchedule } from './FeedSchedule'
+import {
+  FeedScheduleFromJSON,
+  FeedScheduleFromJSONTyped,
+  FeedScheduleToJSON,
+  FeedScheduleToJSONTyped,
+} from './FeedSchedule'
+
 /**
- * A feed.
- *
+ * A Feed.
  * @export
  * @interface Feed
  */
 export interface Feed {
   /**
-   * The unique ID of the Feed
-   * @type {string}
-   * @memberof Feed
-   */
-  id: string
-  /**
-   * The name of the feed for easy reference
+   * The name of the Feed for easy reference.
    * @type {string}
    * @memberof Feed
    */
   name: string
   /**
-   * The date the key was created in ISO 8601 datetime
+   *
+   * @type {FeedSchedule}
+   * @memberof Feed
+   */
+  schedule?: FeedSchedule
+  /**
+   *
+   * @type {FeedTuner}
+   * @memberof Feed
+   */
+  tuner?: FeedTuner
+  /**
+   * The unique ID of the Feed.
+   * @type {string}
+   * @memberof Feed
+   */
+  id: string
+  /**
+   * The date the Feed was last refreshed in ISO 8601 UTC datetime.
+   * @type {Date}
+   * @memberof Feed
+   */
+  refreshedAt?: Date
+  /**
+   * The date the Feed was created in ISO 8601 UTC datetime.
    * @type {Date}
    * @memberof Feed
    */
   createdAt?: Date
   /**
-   * The date the key was last modified in ISO 8601 datetime
+   * The date the Feed was last updated in ISO 8601 UTC datetime.
    * @type {Date}
    * @memberof Feed
    */
-  modifiedAt?: Date
+  updatedAt?: Date
 }
 
 /**
  * Check if a given object implements the Feed interface.
  */
 export function instanceOfFeed(value: object): value is Feed {
-  if (!('id' in value) || value['id'] === undefined) return false
   if (!('name' in value) || value['name'] === undefined) return false
+  if (!('id' in value) || value['id'] === undefined) return false
   return true
 }
 
@@ -67,12 +99,19 @@ export function FeedFromJSONTyped(
     return json
   }
   return {
-    id: json['id'],
     name: json['name'],
+    schedule:
+      json['schedule'] == null
+        ? undefined
+        : FeedScheduleFromJSON(json['schedule']),
+    tuner: json['tuner'] == null ? undefined : FeedTunerFromJSON(json['tuner']),
+    id: json['id'],
+    refreshedAt:
+      json['refreshedAt'] == null ? undefined : new Date(json['refreshedAt']),
     createdAt:
       json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    modifiedAt:
-      json['modifiedAt'] == null ? undefined : new Date(json['modifiedAt']),
+    updatedAt:
+      json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   }
 }
 
@@ -89,13 +128,17 @@ export function FeedToJSONTyped(
   }
 
   return {
-    id: value['id'],
     name: value['name'],
+    schedule: FeedScheduleToJSON(value['schedule']),
+    tuner: FeedTunerToJSON(value['tuner']),
+    id: value['id'],
+    refreshedAt:
+      value['refreshedAt'] == null
+        ? undefined
+        : value['refreshedAt'].toISOString(),
     createdAt:
       value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
-    modifiedAt:
-      value['modifiedAt'] == null
-        ? undefined
-        : value['modifiedAt'].toISOString(),
+    updatedAt:
+      value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   }
 }
