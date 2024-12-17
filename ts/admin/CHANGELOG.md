@@ -1,5 +1,12 @@
 # @numeno/api-admin
 
+## 0.0.5
+
+### Patch Changes
+
+- 77252fd: Updated the scope system with new naming schema API:RESOURCE:ACTION
+- 42cbbfd: Opened the admin API to external users so they can manage their keys
+
 ## 0.0.4
 
 ### Patch Changes

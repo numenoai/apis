@@ -1,5 +1,11 @@
 # @numeno/api-persona
 
+## 0.0.4
+
+### Patch Changes
+
+- 77252fd: Updated the scope system with new naming schema API:RESOURCE:ACTION
+
 ## 0.0.3
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@numeno/api-persona",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Client library for Numeno Persona API",
   "license": "MIT",
   "author": "Numeno AI inc. <contact@numeno.ai>",

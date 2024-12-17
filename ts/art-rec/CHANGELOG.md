@@ -1,5 +1,11 @@
 # @numeno/api-art-rec
 
+## 0.0.6
+
+### Patch Changes
+
+- 77252fd: Updated the scope system with new naming schema API:RESOURCE:ACTION
+
 ## 0.0.5
 
 ### Patch Changes

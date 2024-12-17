@@ -1,6 +1,6 @@
 {
   "name": "@numeno/api-admin",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Client library for Numeno Administration API",
   "license": "MIT",
   "author": "Numeno AI inc. <contact@numeno.ai>",
